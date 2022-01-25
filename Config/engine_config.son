@@ -1,0 +1,145 @@
+| Engine.ini
+initial configuration settings.
+|
+
+;==============================================================
+; Common settings
+;==============================================================
+
+; Indicates the level of logging output, from 0 to 3. Higher values show more information.
+; 0 - no log
+; 1 - log only warnings and errors
+; 2 - info
+; 3 - debug (only if exe was compiled with debug info)
+; 4 - trace (only if exe was compiled with debug info)
+; 5 - log everything
+LogLevel = 1
+
+bCreateLogFile = 1
+;OverrideLogFileName = 'Engine.log'
+
+bCreateConsoleWindow = 1
+
+
+;==============================================================
+; Developer
+;==============================================================
+
+; for debug builds only
+BreakOnErrors = 1
+
+
+; ultra-fast linear stack-based single-frame scratch memory allocator (main thread only)
+; capacity in megabytes, several MiBs is a good size
+; large sizes are needed for tools
+FrameStackSizeMb = 32
+
+; set to 1 to disable SSE/AVX acceleration
+force_fpu = 0
+
+
+;==============================================================
+; Memory management
+;==============================================================
+
+	;
+	ThreadLocalHeapSizeMb = 8
+
+	; The size of the thread-safe ring buffer allocator that can be used for passing data between threads.
+	; Set to 0 to disable the global locking heap for temporary allocations.
+	TemporaryHeapSizeMiB = 64
+
+	; Set to 1 to use a debug memory heap for all allocations to break on memory access errors.
+	; This memory heap is implemented via Insomniac Games' DebugHeap.
+	; NOTE: this heap is terribly slow, and wastes tons of memory.
+	UseDebugMemoryHeap = 1
+	; the size of the DebugHeap, in megabytes (max 512 MiB on 32-bit)
+	DebugMemoryHeapSizeMiB = 512
+
+;==============================================================
+; Threading
+;==============================================================
+
+	; the number of threads that may be used for parallel task execution
+	; 0 = auto, max = 8, high number doesn't make sense because of contention
+	NumberOfWorkerThreads = 0
+
+	; size of local memory private to each worker thread;
+	; thread-local heaps are used to avoid manipulating the global heap
+	worker_thread_workspace_size_MiB = 8	; large size needed for testing 64^3 chunks which require >5 MiB
+
+;==============================================================
+; Developer console
+;==============================================================
+	; capacity of the console FIFO buffer (0 = don't create developer console)
+	console_buffer_size = 65536
+	save_console_to_file = 'console_history.txt'
+
+	
+;==============================================================
+; Resource manager
+;==============================================================
+
+; size of the ring buffer for streaming, in megabytes
+AsyncIOBufferSize = 64
+
+; Video settings
+
+;==============================================================
+; Renderer settings
+;==============================================================
+
+; run-time renderer selection is implemented only for my Direct3D 11+ and OpenGL 4+ backends
+;UseOpenGL = 1
+
+; works only in development builds
+create_debug_render_device = 1
+
+; for debug viz/editor gizmos
+DynamicVertexBufferSize = 16	; in MiBs
+DynamicIndexBufferSize = 4	; in MiBs
+
+; in megabytes
+VRAM_Budget_Textures = 512
+
+; size of renderer command buffer, in megabytes
+Gfx_Cmd_Buf_Size_MiB = 8
+
+; controls delay in resizing viewports (value in milliseconds, [0..10000]
+ViewportResizeDelayMSec	= 32
+
+;
+enable_VSync = 1
+
+; set to 0 to force single-threaded visibility culling and batch submission
+multithreaded_rendering = 1
+
+screenshots_folder = 'R:/'
+
+
+;==============================================================
+; Client app
+;==============================================================
+
+; main window settings
+window_name = 'Demo1'
+
+window_width = 1024 window_height = 768	; aspect ratio ~ 1.3333
+;window_width = 1600 window_height = 1200	; aspect ratio ~ 1.3333
+;window_width = 1600 window_height = 900	; aspect ratio ~ 1.7777
+;window_width = 1365 window_height = 768	; aspect ratio ~ 1.7777
+;window_width = 1820 window_height = 1024	; aspect ratio ~ 1.7777
+;window_width = 1920 window_height = 1080	; aspect ratio ~ 1.7777
+window_offset_x = 0
+window_offset_y = 0
+window_resizable = 0
+window_fullscreen = 0
+sleep_msec_if_not_in_focus = 0;100
+
+; the assets directory containing compiled asset data
+path_to_compiled_assets = 'R:/NoobWerks/.Build/Assets'
+
+; path to saved camera config
+path_to_save_file = 'R:/savegame.son'
+
+;=========================================================================

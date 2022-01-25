@@ -1,0 +1,36 @@
+; This is an example SON (Simple Object Notation) document.
+
+; NOTE: line comments start with ';', multi-line comments are enclosed with '|'.
+|
+/*
+C-style comments are optionally supported.
+*/
+|
+; this is a string:
+title = 'This is an example document!'
+
+; this is an object - an unordered map of string keys to arbitrary values:
+author = {
+	name = 'S.V.D.'
+	info = 'A freaky, nerdy jerk.'
+	this_is_a_nested_object = {
+		blabla = 'blablabla'
+		yet_another_nested_object = { /*empty*/ }
+	}
+	;#hashed_id = 'This is a hashed identifier; its value can be looked up via its name hash
+}
+
+; all numerical values are stored as double-precision floating-point numbers
+Pi = 3.14159265358
+XXX = -666.0
+i = 7
+
+; this is an empty value:
+null_value = nil
+true
+false
+; this is a (linked) list of arbitrary values:
+list = ( 'first_item' 'second_item2' 3 {x = 5} 'the_last_item' )
+
+; this is an array - an ordered sequence of values of any type which can be directly accessed by array index:
+array = [ 1 2 3 {name='Fourth' index = 4} 5 {name='Last' index = 6} ]

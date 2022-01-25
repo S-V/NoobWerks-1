@@ -1,0 +1,4 @@
+.Build
+
+/Binaries/x86/*.exe
+/Binaries/x64/*.exe

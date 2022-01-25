@@ -1,0 +1,38 @@
+; render state: no face culling, no depth testing, alpha-blending
+rasterizer = 	{
+	fill_mode	= 'Solid'
+	cull_mode 	= 'None'	; so that backfaces are not culled when the eye is inside the volume
+	flags = ()
+}
+
+depth_stencil = 	{
+	name = 'ZLessEqual_NoZWrite_NoStencil'
+	flags = (
+		'Enable_DepthTest'
+	)
+
+	;comparison_function = 'Less_Equal'
+	; Reverse Z:
+	comparison_function = 'Greater_Equal'
+}
+
+; additive blending
+blend = {
+	name = 'Additive'
+	flags = (
+		'Enable_Blending'
+	)
+
+	color_channel = {
+		operation = 'ADD'
+		source_factor = 'ONE'
+		destination_factor = 'ONE'
+	}
+	alpha_channel = {
+		operation = 'ADD'
+		source_factor = 'ONE'
+		destination_factor = 'ZERO'
+	}
+
+	write_mask	= ('ENABLE_ALL')
+}

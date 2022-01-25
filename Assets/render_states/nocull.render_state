@@ -1,0 +1,20 @@
+; render state: no face culling, no depth testing, alpha-blending
+rasterizer = 	{
+	name = 'Solid_NoCull_NoClip'
+	fill_mode	= 'Solid'
+	cull_mode 	= 'None'
+	flags = (
+	)
+}
+
+depth_stencil = 	{
+	name = 'NoZTest_NoZWrite_NoStencil'
+	flags = (
+	)
+	comparison_function = 'Always'
+}
+
+blend = {
+	; no blending
+	name = 'Default'
+}

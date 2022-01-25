@@ -1,0 +1,35 @@
+;0
+title = 'This is a string!'
+
+;1
+null_value = nil
+;#hashed_id = 'This is a hashed identifier'
+
+;2
+owner = {
+	name = 'Tom Preston-Werner'
+	organization = 'GitHub'
+	bio = 'GitHub Cofounder & CEO\nLikes tater tots and beer.'
+	;#hlfhahoyw = "!!!!!!"
+	yet_another_nested_object={}
+}
+
+;3
+Pi = 3.1415
+
+; 4
+x = -0.01
+
+; 5
+; arrays of complex values are not yet implemented:
+;ports = [ 8001 8002 8003 {name='Hi' x = 3131} ]
+ports = [ 8001 8002 8003 'Hi' ]
+
+; 6
+p = 'Q'
+
+; 7
+list = ( 'item1' 'item2' 3 )
+
+; 8
+last = 8

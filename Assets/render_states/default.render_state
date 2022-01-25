@@ -1,0 +1,27 @@
+; default render state for rendering opaque geometry:
+; no face culling, no depth testing, no blending
+
+rasterizer = 	{
+	name = 'Default'
+	fill_mode = 'Solid'
+	cull_mode = 'Back'
+	flags = (
+		'Enable_DepthClip'
+	)
+}
+
+depth_stencil = 	{
+	name = 'Default'
+	flags = (
+		'Enable_DepthTest'
+		'Enable_DepthWrite'
+	)
+
+	; We are using Reverse Z, so use 'Greater' instead of 'Less':
+	;comparison_function = 'Less'
+	comparison_function = 'Greater'	
+}
+
+blend = {
+	; no blending
+}

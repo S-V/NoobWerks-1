@@ -1,0 +1,357 @@
+; see BitSquid Tech: Benefits of a data-driven renderer [2011]
+
+|
+33. Global Resource Set:
+    Specifies GPU resources to be allocated at start-up 
+    Mainly render targets (all global RTs except swap-chain) 
+    Resources identified by name
+|
+
+depth_stencil_states = [
+	{
+		name = 'Default'
+		enableDepthTest	= 1
+		enableDepthWrite = 1
+		depthFunction = 'Less'
+
+		enableStencil = 0
+		stencilReadMask = -1 ; 0xFF
+		stencilWriteMask = -1 ; 0xFF
+		
+		frontFace = {
+			stencilFunction = 'ALWAYS'
+			stencilPassOp = 'KEEP'
+			stencilFailOp = 'KEEP'
+			depthFailOp = 'KEEP'
+		}
+		backFace = {
+			stencilFunction = 'ALWAYS'
+			stencilPassOp = 'KEEP'
+			stencilFailOp = 'KEEP'
+			depthFailOp = 'KEEP'
+		}
+	}
+
+	|{
+		name = 'DS_ZTestLessEqual_ZWrite_NoStencil'
+		enableDepthTest	= 1
+		enableDepthWrite = 0
+		depthFunction = 'Less_Equal'
+
+		enableStencil = 0
+		stencilReadMask = -1 ; 0xFF
+		stencilWriteMask = -1 ; 0xFF
+	}|
+
+	|{
+		name = 'Less'
+		enableDepthTest	= 1
+		enableDepthWrite = 1
+		depthFunction = 'Less'
+		enableStencil = 0
+	}
+	|
+
+	{
+		name = 'ZLess_NoZWrite_NoStencil'
+		enableDepthTest	= 1
+		enableDepthWrite = 0
+		depthFunction = 'Less'
+		enableStencil = 0
+	}
+	
+	{
+		name = 'ZLessEqual_NoZWrite_NoStencil'
+		enableDepthTest	= 1
+		enableDepthWrite = 0
+		depthFunction = 'Less_Equal'
+		enableStencil = 0
+	}
+	{
+		name = 'NoZTest_NoZWrite_NoStencil'
+		enableDepthTest	= 0
+		enableDepthWrite = 0
+		depthFunction = 'Always'
+		enableStencil = 0
+	}
+	{
+		name = 'GUI'
+		enableDepthTest	= 0
+		enableDepthWrite = 0
+		depthFunction = 'Always'
+		enableStencil = 0
+	}
+]
+
+rasterizer_states = [
+	{
+		name = 'Default'
+		fillMode = 'Solid'
+		cullMode = 'Back'
+		enableDepthClip = 1
+		enableScissor = 0
+		enableMultisample = 0
+		enableAntialiasedLine = 0
+	}
+	{
+		name = 'Solid_NoCull_NoClip'
+		fillMode	= 'Solid'
+		cullMode 	= 'None'
+		enableDepthClip = 0
+	}
+	{
+		name = 'Solid_NoCull_DepthClip'
+		fillMode	= 'Solid'
+		cullMode 	= 'None'
+		enableDepthClip = 1
+	}
+	{
+		name = 'Solid_CullBack_NoClip'
+		fillMode	= 'Solid'
+		cullMode 	= 'Back'
+		enableDepthClip = 0
+	}
+	{
+		name = 'Wire_CullBack_NoClip'
+		fillMode	= 'Wireframe'
+		cullMode 	= 'Back'
+		enableDepthClip = 0
+	}
+	{
+		name = 'Wire_NoCull_NoClip'
+		fillMode	= 'Wireframe'
+		cullMode 	= 'None'
+		enableDepthClip = 0
+	}
+	{
+		name = 'GUI'
+		fillMode	= 'Solid'
+		cullMode 	= 'None'
+		enableDepthClip = 0
+		enableScissor = 1
+	}
+]
+
+sampler_states = [
+	{
+		name	= 'Point'
+		filter		= 'Min_Mag_Mip_Point'
+		addressU 	= 'Wrap'
+		addressV 	= 'Wrap'
+		addressW 	= 'Wrap'
+	}
+	{
+		name	= 'Bilinear'
+		filter		= 'Min_Mag_Linear_Mip_Point'
+		addressU 	= 'Wrap'
+		addressV 	= 'Wrap'
+		addressW 	= 'Wrap'
+	}
+	{
+		name	= 'Trilinear'
+		filter		= 'Min_Mag_Mip_Linear'
+		addressU 	= 'Wrap'
+		addressV 	= 'Wrap'
+		addressW 	= 'Wrap'
+	}
+	{
+		name	= 'Anisotropic'
+		filter		= 'Anisotropic'
+		addressU 	= 'Wrap'
+		addressV 	= 'Wrap'
+		addressW 	= 'Wrap'
+		maxAnisotropy = 8
+	}
+	
+	; for hardware accelerated shadow map filtering (2x2 PCF)
+	{
+		name	= 'ShadowMapPCF'
+		filter		= 'Min_Mag_Linear_Mip_Point'
+		addressU 	= 'Clamp'
+		addressV 	= 'Clamp'
+		addressW 	= 'Clamp'
+		comparison	= 'Less_Equal'
+		borderColor = [ 0 0 0 0 ]
+		minLOD		= 0
+		maxLOD		= 0
+		mipLODBias	= 0
+	}
+
+	{
+		name	= 'GUI'
+		filter		= 'Min_Mag_Mip_Point'
+		addressU 	= 'Wrap'
+		addressV 	= 'Wrap'
+		addressW 	= 'Wrap'
+		comparison	= 'Always'
+		minLOD		= 0
+		maxLOD		= 0
+		mipLODBias	= 0
+	}
+]
+
+blend_states = [
+	; no blending
+	{
+		name = 'Default'
+		enableBlending = 0
+		
+		color = {
+			operation = 'ADD'
+			sourceFactor = 'ONE'
+			destinationFactor = 'ZERO'
+		}
+		alpha = {
+			operation = 'ADD'
+			sourceFactor = 'ONE'
+			destinationFactor = 'ZERO'
+		}
+
+		writeMask	= ('ENABLE_ALL')
+
+		enableAlphaToCoverage	= 0
+		enableIndependentBlend	= 0
+	}
+
+	; additive blending
+	{
+		name = 'Additive'
+		enableBlending = 1
+
+		color = {
+			operation = 'ADD'
+			sourceFactor = 'ONE'
+			destinationFactor = 'ONE'
+		}
+		alpha = {
+			operation = 'ADD'
+			sourceFactor = 'ONE'
+			destinationFactor = 'ZERO'
+		}
+
+		writeMask	= ('ENABLE_ALL')
+
+		enableAlphaToCoverage	= 0
+		enableIndependentBlend	= 0
+	}
+
+	; alpha blending
+	{
+		name = 'AlphaBlending'
+		enableBlending = 1
+
+		color = {
+			operation = 'ADD'
+			sourceFactor = 'SRC_ALPHA'
+			destinationFactor = 'INV_SRC_ALPHA'
+		}
+		alpha = {
+			operation = 'ADD'
+			sourceFactor = 'INV_SRC_ALPHA'
+			destinationFactor = 'ZERO'
+		}
+
+		writeMask	= ('ENABLE_ALL')
+
+		enableAlphaToCoverage	= 0
+		enableIndependentBlend	= 0
+	}
+]
+
+state_blocks = [
+	{
+		name				= 'Default'
+
+		depthStencilState 	= 'Default'
+		stencilRef			= 0
+
+		rasterizerState		= 'Default'
+
+		blendFactorRGBA		= { R=0.0 G=0.0 B=0.0 A=1.0 }
+		sampleMask 			= -1 ; 0xFFFFFFFF
+		blendState 			= 'Default'
+	}
+
+	{
+		name				= 'Translucent'
+		depthStencilState 	= 'ZLess_NoZWrite_NoStencil'
+		rasterizerState		= 'Solid_NoCull_NoClip'
+		blendState 			= 'AlphaBlending'
+	}
+		
+	{
+		name				= 'Wireframe'
+		depthStencilState 	= 'ZLessEqual_NoZWrite_NoStencil'
+		rasterizerState		= 'Wire_CullBack_NoClip'
+		blendState 			= 'Default'
+	}
+	; for rendering in 'thick' wireframe
+	{
+		name				= 'SolidWireframe'
+		depthStencilState 	= 'ZLessEqual_NoZWrite_NoStencil'
+		rasterizerState		= 'Solid_CullBack_NoClip'
+		blendState 			= 'Default'
+	}
+	{
+		name				= 'NoCulling'
+		depthStencilState 	= 'NoZTest_NoZWrite_NoStencil'
+		rasterizerState		= 'Solid_NoCull_NoClip'
+		blendState 			= 'Default'
+	}
+	{
+		name				= 'NoCulling_Wireframe'
+		depthStencilState 	= 'NoZTest_NoZWrite_NoStencil'
+		rasterizerState		= 'Wire_NoCull_NoClip'
+		blendState 			= 'Default'
+	}
+	
+	{
+		name				= 'SkyBox'
+		; Make sure the depth function is LESS_EQUAL and not just LESS.  
+		; Otherwise, the normalized depth values at z = 1 (NDC) will 
+		; fail the depth test if the depth buffer was cleared to 1.
+		depthStencilState 	= 'ZLessEqual_NoZWrite_NoStencil'
+		rasterizerState		= 'Solid_NoCull_DepthClip'
+		blendState 			= 'Default'
+	}
+	
+	; render states for deferred lighting / shading
+	; e.g. full-screen pass for directional lighting
+	{
+		name				= 'Deferred_Lighting'
+		rasterizerState		= 'Solid_NoCull_NoClip'
+		depthStencilState 	= 'NoZTest_NoZWrite_NoStencil'
+
+		blendState 			= 'Additive'
+		blendFactorRGBA		= { R=0.0 G=0.0 B=0.0 A=1.0 }
+		sampleMask 			= -1 ; 0xFFFFFFFF
+	}
+	
+	{
+		name				= 'FullScreenAlphaBlend'
+		depthStencilState 	= 'NoZTest_NoZWrite_NoStencil'
+		rasterizerState		= 'Default'
+		blendState 			= 'AlphaBlending'
+	}
+
+	; Blended Order-Independent Transparency (OIT)
+	{
+		name				= 'BlendedOIT'
+		depthStencilState 	= 'ZLess_NoZWrite_NoStencil'
+		rasterizerState		= 'Solid_NoCull_NoClip'
+		blendState 			= 'AlphaBlending'
+	}
+]
+
+; shaders that must be pre-loaded
+shaders = [
+	; ImGui
+	'gui'
+
+	; screen-space quads
+	'screen_copy'
+	'full_screen_triangle'
+
+	; 3D debug viz
+	'auxiliary_rendering'
+]

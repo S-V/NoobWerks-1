@@ -1,0 +1,8 @@
+shader = 'material_default'
+
+resources = [
+	{
+		name = 't_diffuseMap'
+		asset = 'moon8k'
+	}
+]

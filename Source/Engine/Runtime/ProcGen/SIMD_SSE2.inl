@@ -1,0 +1,1 @@
+#define SIMD_SUFFIX	SSE2

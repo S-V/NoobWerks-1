@@ -1,0 +1,476 @@
+|
+	Tiled deferred rendering pipeline description.
+|
+; dependencies
+includes = [
+	'renderer_common'
+	'deferred_common'
+]
+
+color_targets = [
+	; R8G8B8 - view-space normal, A8 - unused
+	{
+		name = 'GBufferTexture0'
+		depends_on = 'BackBuffer'
+		sizeX = { size = 1 relative = 1 }
+		sizeY = { size = 1 relative = 1 }
+		format	=	'RGBA8'
+		auto_is_cleared = 1
+	}
+	; R8G8B8 - diffuse/albedo, A8 - unused
+	{
+		name = 'GBufferTexture1'
+		depends_on = 'BackBuffer'
+		sizeX = { size = 1 relative = 1 }
+		sizeY = { size = 1 relative = 1 }
+		format	=	'RGBA8'
+		auto_is_cleared = 1
+	}
+	
+	|
+	; RGB - specular color (and intensity), A - specular power
+	{
+		name = 'GBufferTexture2'
+		depends_on = 'BackBuffer'
+		sizeX = { size = 1 relative = 1 }
+		sizeY = { size = 1 relative = 1 }
+		format	=	'RGBA8'
+		auto_is_cleared = 1
+	}
+	|
+]
+
+|
+depth_targets = [
+	; CSM/PSSM
+	{
+		name = 'ShadowMap'
+		; these settings are modified within the application code based on quality settings
+		sizeX = { size = 2048 relative = 0 }
+		sizeY = { size = 2048 relative = 0 }
+		format	=	'D32'
+		sample = 1
+	}
+]
+|
+
+|
+35. Layers Configuration:
+    Defines the draw order of the visible batches in a game world 
+    Layers are processed in the order they are declared 
+    Shader system points out which layer to render in 
+36. Layer Breakdown:
+	Name used for referencing from shader system 
+	Destination render targets (& DST) for the layer batches 
+	Depth sorting: front-to-back / back-to-front 
+	Optional Resource Generator* to run 
+|
+layers =
+[
+	; Shadow Map Rendering for the Global Directional light
+	{
+		id = 'RenderDepthOnly'
+		; depth-only rendering
+		depth_stencil = { name = 'ShadowMap' }
+		sort = 'FrontToBack'
+	}
+|
+	; must be done before rendering the scene's geometry for mirrors, CSG, etc.
+	{
+		id = 'MaskGeometryViaStencil'
+		
+		render_targets = [
+			{ name = 'GBufferTexture0' is_cleared = 1 }	; normals
+			{ name = 'GBufferTexture1' is_cleared = 1 }	; albedo
+			{ name = 'GBufferTexture2' is_cleared = 1 }	; specular
+		]
+		depth_stencil = { name = 'MainDepthStencil' is_cleared = 1 }
+	}
+|
+
+
+
+
+
+
+	; G-Buffer Stage: Render all solid objects to a very sparse G-Buffer
+	{
+		id = 'FillGBuffer'
+		; NOTE: the G-Buffer is cleared manually
+		; Bind render targets and main depth-stencil surface.
+		render_targets = [
+			{ name = 'GBufferTexture0' is_cleared = 0 }
+			{ name = 'GBufferTexture1' is_cleared = 0 }
+			;{ name = 'GBufferTexture2' is_cleared = 0 }
+		]
+		depth_stencil = {
+			name = 'MainDepthStencil'
+
+			; NOTE: depth-stencil is cleared in app code!
+			is_cleared = 0
+			; ; we're using reversed Z, so clear depth to 0
+			; depth_clear_value = 0
+		}
+
+		;render_state = 'Default'
+		;default_shader = ?
+		;filter = Solid/Opaque only
+		sort = 'FrontToBack'	; Draw opaque objects front to back
+		profiling_scope = 'Fill G-Buffer'
+		; Fill buffers with material properties of *opaque* primitives.
+	}
+
+	; G-buffer has been filled with data.
+
+	
+	
+	; Deferred Decals
+	{
+		id = 'DeferredDecals'
+		; Bind GBuffer render targets for *writing* only!
+		render_targets = [
+			;{ name = 'GBufferTexture0' is_cleared = 0 }
+			{ name = 'GBufferTexture1' is_cleared = 0 }	; albedo
+			;{ name = 'GBufferTexture2' is_cleared = 0 }
+		]
+		; Bind Depth-Stencil for *reading* only!
+		depth_stencil = {
+			name = 'MainDepthStencil'
+			is_read_only = 1
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	; Thin (Surface) Voxelization (via Geometry shader) for VXGI
+	{
+		id = 'VXGI_Voxelize'
+	}	
+
+	
+	; Copy the packed voxel scene data from the buffer to a 3D texture
+	{
+		id = 'VXGI_BuildVolumeTexture'
+	}	
+
+	; Copy the packed voxel scene data from the buffer to a 3D texture
+	{
+		id = 'VXGI_InjectSkyLighting'
+	}
+
+	
+	
+	
+	; filter the sky/environment (described analytically or by a cubemap) into a set of SH or ambient cube coefficients
+	{
+		id = 'GenerateSkyIrradianceMap'
+	}
+
+	; Generate Light Probes using Cascaded Voxel Cone Trace
+	{
+		id = 'GenerateLightProbes'
+	}
+
+	
+	; Diffuse Global Illumination based on Light Probes
+	; See:
+	; Dynamic Diffuse Global Illumination with Ray-Traced Irradiance Fields [2019]
+	; Precomputed Light Field Probes [2017]
+	{
+		id = 'DDGI_GenerateRays'
+	}
+	{
+		id = 'DDGI_TraceProbeRays'
+	}
+	{
+		id = 'DDGI_UpdateIrradianceProbes'
+	}
+	{
+		id = 'DDGI_UpdateDistanceProbes'
+	}
+	
+
+	
+	
+	
+	;
+	{
+		id = 'ReduceViewDepth_CS'
+		; Reduce screen-space depth into 1x1 RT with min & max values.
+	}
+	
+	; point lights -> 'LightingTarget'
+	{
+		id = 'TiledDeferred_CS'
+		; Bind null color buffer and depth-stencil.
+		; No need to clear, we write all pixels.
+	}
+	
+	
+	
+	
+	; Render deferred local lights.
+	{
+		id = 'DeferredLocalLights'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' is_read_only = 1 }
+		profiling_scope = 'Deferred Local Lights'
+	}
+	; Apply deferred directional lights.
+	{
+		id = 'DeferredGlobalLights'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' is_read_only = 1 }
+		profiling_scope = 'Deferred Global Lights'
+	}
+
+	; Emissive (e.g. glowing decals).
+	{
+		id = 'EmissiveAdditive'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' is_read_only = 1 }
+	}
+	
+	
+	; Forward stage
+	{
+		id = 'Opaque_Forward'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' }
+	}
+
+
+
+	{
+		id = 'DDGI_VisualizeProbes'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' }
+	}
+	{
+		id = 'Unlit'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' }
+	}	
+
+
+	
+	
+	;
+	{
+		id = 'Sky'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' is_read_only = 1 }
+	}
+
+
+
+	
+|
+
+	; Blended Order-Independent Transparency (OIT):
+	;
+	{
+		id = 'BlendedOIT'
+		render_targets = [
+			{ name = 'BlendedOIT_Accumulation' is_cleared = 1 }
+			{ name = 'BlendedOIT_Revealage' is_cleared = 1 }
+		]
+		; Keep the depth buffer that was rendered for opaque surfaces
+		; bound for depth testing when rendering transparent surfaces,
+		; but do not write to it.
+		depth_stencil = { name = 'MainDepthStencil' is_read_only = 1 }
+	}
+	
+|
+	
+
+
+	; Alpha-Blended Glass
+	{
+		id = 'Deferred_Translucent'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		
+		depth_stencil = { name = 'MainDepthStencil' is_read_only = 1 }
+	}
+	
+	; Alpha-Blended Particles
+	; currently, must be rendered before 'Translucent' muzzle flashes
+	{
+		id = 'VolumetricParticles'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		
+		depth_stencil = { name = 'MainDepthStencil' is_read_only = 1 }
+	}
+	
+	
+	; Alpha-Blended (Order-Dependent) Transparency
+	{
+		id = 'Translucent'
+		render_targets = [
+			{ name = 'LightingTarget' }
+		]
+		
+		depth_stencil = { name = 'MainDepthStencil' is_read_only = 1 }
+	}
+	
+	
+|
+	; Fog
+	{
+		id = 'PostFX'
+		render_targets = [
+			{ name = '$Default' }
+		]
+	}
+|
+	; Combine: LightingTarget -> FrameBuffer
+	{
+		id = 'DeferredCompositeLit'
+		render_targets = [
+			{ name = 'FXAA_Input' }
+		]
+	}
+
+
+	
+	
+	
+	
+	
+
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	; High Dynamic Range (HDR) rendering
+	{
+		id = 'HDR_CreateLuminance'
+		render_targets = [
+			; HACK: will be set in code
+		]
+		profiling_scope = 'Luminance Map Generation'
+	}
+	{
+		id = 'HDR_AdaptLuminance'
+		render_targets = [
+			; HACK: will be set in code
+		]
+		profiling_scope = 'Luminance Adaptation'
+	}
+	{
+		id = 'Bloom_Threshold'
+		render_targets = [
+			; HACK: will be set in code
+		]
+	}
+	{
+		id = 'Bloom_Downscale'
+		render_targets = [
+			; HACK: will be set in code
+		]
+	}
+	{
+		id = 'HDR_Tonemap'
+		render_targets = [
+;			{ name = '$Default' }
+			{ name = 'FXAA_Input' }
+		]
+	}
+
+	; thick wireframes should be antialiased
+	{
+		id = 'DebugWireframe'
+		render_targets = [
+;			{ name = '$Default' }
+			{ name = 'FXAA_Input' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' }
+	}
+
+	; Fast Approximate Anti-Aliasing (FXAA)
+	{
+		id = 'FXAA'
+		render_targets = [
+			{ name = '$Default' }
+		]
+	}
+
+	
+
+	
+	; e.g. show Ambient Occlusion, the contents of the ray-traced buffer
+	{
+		id = 'DebugTextures'
+		render_targets = [
+			{ name = '$Default' }
+		]
+	}
+	{
+		id = 'DebugLines'
+		render_targets = [
+			{ name = '$Default' }
+		]
+		depth_stencil = { name = 'MainDepthStencil' }
+	}
+	{
+		id = 'DebugScreenQuads'
+		render_targets = [
+			{ name = '$Default' }
+		]
+	}
+
+	; In-Game HUD
+	{
+		id = 'HUD'
+		render_targets = [
+			{ name = '$Default' }
+		]
+	}
+
+	; Debug GUI
+	; draw debug GUI above everything else
+	{
+		id = 'GUI'
+		render_targets = [
+			{ name = '$Default' }
+		]
+	}
+]
+
+; preload shaders
+shaders = [
+	'deferred_directional_light'
+	;'solid_wireframe'
+]

@@ -1,0 +1,246 @@
+|
+	NOTE: set strip_debug_info = 1
+	in production mode.
+|
+
+; ignore source files whose filenames do not contain these substrings
+source_file_filters = [
+	|
+	'.render_state'
+	'.renderer'
+	'.fx'
+	|
+	
+	|
+	'.shader'
+	|
+]
+
+
+; folders with source assets
+source_paths = [
+	; built-in shaders
+	'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/'
+	
+	;
+	'R:/NoobWerks/Assets/'
+	
+	; Voxel Engine Testbed
+	'D:/dev/____VOXELS/'
+
+	; Gaijin Game Jam #1
+	;'D:/dev/____SpaceGame/'
+	
+	; proc planet
+	;'D:/dev/__planet_assets/'
+	;'D:/dev/___FPS_Game/'
+	
+	|
+	'D:/research/__test/glTF/WaterBottle/'
+	|
+]
+; the folder where run-time and intermediate asset data will be stored
+output_path = 'R:/NoobWerks/.Build/Assets/'
+
+; path to the SQLite 3 database used by the asset pipeline
+asset_database = 'R:/NoobWerks/.Build/Assets/__assets.sqlite3'
+
+; needed for hot-reload
+monitor_file_changes = 1
+
+
+; debugging
+
+; useful when changing shaders for hot-reloading (disable if annoying)
+beep_on_errors = 0
+
+dump_clumps_to_text = 0
+use_debug_memory_heap = 0
+
+
+; for stealing assets from other games
+doom3 = {
+	asset_folder = 'D:/dev/Doom3'
+	scale_meshes_to_meters = 1
+}
+
+file_associations = [
+	; Lua scripts
+	{
+		asset_compiler = 'ScriptCompiler'
+		extensions = [ 'lua' ]
+	}
+
+	;
+	{
+		asset_compiler = 'InputBindingsCompiler'
+		extensions = [ 'input_bindings' ]
+	}
+
+	; texture maps
+	{
+		asset_compiler = 'TextureCompiler'
+		extensions = [
+			'dds' 'png'
+			'tga' 'bmp'
+			'pic' 'ppm' 'pgm' 'jpg'
+		]
+	}
+
+	; shader programs
+	{
+		; our custom 'effect file' compiler
+		asset_compiler = 'ShaderEffectCompiler'
+		; processes annotated shader source code
+		extensions = [ 'fx' ]
+	}
+
+	; render states
+	{
+		asset_compiler = 'RenderStateCompiler'
+		extensions = [ 'render_state' ]
+	}
+
+	; graphics materials
+	{
+		asset_compiler = 'MaterialCompiler'
+		extensions = [ 'material' ]
+	}
+
+	; rendering pipelines
+	{
+		asset_compiler = 'RenderPipelineCompiler'
+		extensions = [ 'renderer' ]
+	}
+
+	; triangle meshes
+	{
+		asset_compiler = 'MeshCompiler'
+		extensions = [
+			'TbRawMeshData'
+			'obj' 'ply' '3ds' 'dae' 'mesh'
+			'mdl' 'md2' 'md3'
+			'lwo'
+		]
+	}
+	
+	; audio files
+	{
+		asset_compiler = 'AudioAssetsCompiler'
+		extensions = [ 'wav' 'ogg' 'mp3' ]
+	}
+	
+	;======================
+	; GAME-SPECIFIC
+	;======================
+	
+	; non-skinned models
+	{
+		asset_compiler = 'Compiler_for_NwModelDef'
+		extensions = [
+			'NwModelDef'
+		]
+	}
+
+	; Weapon Def Tables
+	{
+		asset_compiler = 'WeaponDef_Compiler'
+		extensions = [ 'NwWeaponDef' ]
+	}
+	
+	; Doom3 assets:
+
+	; Entity Defs with animated (skinned) models
+	{
+		asset_compiler = 'Doom3_idEntityDef_Compiler'
+		extensions = [ 'def' ]
+	}
+|
+	; Doom3 Materials/Shaders (idMaterial)
+	{
+		asset_compiler = 'Doom3_MaterialShader_Compiler'
+		extensions = [ 'mtr' ]
+	}
+|
+	; Sound Shaders (idSound)
+	{
+		asset_compiler = 'Doom3_SoundShader_AssetCompiler'
+		extensions = [ 'sndshd' ]
+	}
+	; 'opaque' assets are simply copied without any processing	
+	|{
+		asset_compiler = 'PassThrough'
+		extensions = [ 'son' ]
+	}|
+]
+
+; for tracking file dependencies (e.g. rebuilding effects and materials after a HLSL file has been changed)
+tracked_file_extensions = [
+	'hlsl'	; included by shaders -> materials
+	'h'	; headers are included by *.hlsl
+]
+
+;=========================================================
+texture_compiler = {
+	; texture array code packs dds into proprietary texture formats
+	use_proprietary_texture_formats_instead_of_DDS = 1
+}
+
+;=========================================================
+shader_compiler = {
+	
+	; folder where the compiler should look for shaders source files
+	include_directories = [
+		; core engine
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/'
+		;TODO: remove these
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/'
+		
+		; shader assets
+		'R:/NoobWerks/Assets/shaders/'
+
+		; material assets
+		'R:/NoobWerks/Assets/materials/'
+	]
+	
+	; *.fx
+	effect_directories = [
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/Atmosphere/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/Common/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/Debug/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/GI/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/PBR/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/Sky/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/Model/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/Noise/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/VoxelGI/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/VoxelTerrain/'
+		'R:/NoobWerks/Source/Engine/Runtime/Rendering/Private/Shaders/HLSL/UI/'
+
+		'R:/NoobWerks/Assets/shaders/'
+		'R:/NoobWerks/Assets/materials/'
+	]
+
+	
+	; should be 1 in release; turn off for easier debugging
+	optimize_shaders = 1
+	
+	; should be 1 in release; turn off for easier debugging
+	strip_debug_info = 0
+
+	; comment out to disable disassebly generation
+	disassembly_path = 'R:/NoobWerks/.Build/Assets/'
+
+	; shader programs metadata will be saved into this folder
+	;intermediate_path = 'R:/NoobWerks/.Build/Assets/'
+}
+
+renderpath_compiler = {
+	; should be 1 in release; turn off for easier debugging
+	strip_debug_info = 0
+}
+
+script_compiler = {
+	; should be 1 in release; turn off for debugging Lua scripts
+	strip_debug_info = 0
+}

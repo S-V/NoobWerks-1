@@ -1,0 +1,28 @@
+	{
+		structs = []
+		strings = []
+		floats = [
+			{
+				wraps_around = 0
+				numDigits = 7
+				singleStep = 0.001
+				defaultValue = 0
+				maximumValue = 1000000
+				minimumValue = -1000000
+				flags = ()
+				widget = 'DoubleSpinBox'
+				toolTip = ''
+				statusTip = ''
+				annotation = ''
+				description = ''
+				nameInEditor = 'probability_threshold'
+				cppFieldName = 'probability_threshold'
+				baseTypeName = 'float'
+			}
+		]
+		booleans = []
+		integers = []
+		flags = ()
+		nameInEditor = 'StarfieldSettings'
+		cppClassName = 'StarfieldSettings'
+	}

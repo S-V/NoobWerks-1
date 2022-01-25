@@ -1,0 +1,4 @@
+outputFolder = 'R:/lollipop/Build/fxc/'
+bWatchFiles = 1
+searchPaths = []
+sourcePath = 'R:/lollipop/Assets/shaders/'

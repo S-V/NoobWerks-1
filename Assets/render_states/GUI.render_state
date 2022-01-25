@@ -1,0 +1,36 @@
+; render state: no face culling, no depth testing, alpha-blending
+rasterizer = {
+	name = 'GUI'
+	fill_mode	= 'Solid'
+	cull_mode 	= 'None'
+	flags = (
+		'Enable_Scissor'
+	)
+}
+
+depth_stencil = {
+	name = 'GUI'
+	flags = ()
+	comparison_function = 'Always'
+}
+
+blend = {
+	name = 'GUI'
+	flags = (
+		'Enable_Blending'
+	)
+
+	; alpha blending
+	color_channel = {
+		operation = 'ADD'
+		source_factor = 'SRC_ALPHA'
+		destination_factor = 'INV_SRC_ALPHA'
+	}
+	alpha_channel = {
+		operation = 'ADD'
+		source_factor = 'INV_SRC_ALPHA'
+		destination_factor = 'ZERO'
+	}
+
+	write_mask	= ('ENABLE_ALL')
+}

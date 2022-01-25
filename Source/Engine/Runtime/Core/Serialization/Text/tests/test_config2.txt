@@ -1,0 +1,30 @@
+description="This is a string!"
+
+title= "TOML Example"
+
+owner = {
+	name = "Tom Preston-Werner"
+	organization = "GitHub"
+	bio = "GitHub Cofounder & CEO\nLikes tater tots and beer."
+	
+	yet_another_nested_object={
+	}
+}
+
+Pi = 3.1415
+x = -0.01
+
+; You can indent as you please. Tabs or spaces. TOML don't care.
+;@database
+server = "192.168.1.1"
+connection_max = 5000
+;ports = [ 8001 8002 8003 ]
+enabled = 0
+enabled2 = 0.0
+enabled3 = 1
+
+;this doesn't work:
+;array_of_tables = [
+;	{x = 4 y = 7}
+;	{p = "?" q = 42}
+;]

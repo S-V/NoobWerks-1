@@ -1,0 +1,275 @@
+/*
+@
+	draw 'FullScreenQuad'
+		VS_entry FullScreenTriangle_VS
+		PS_entry PS_DeferredSpotLight
+@
+
+@{
+	draw FullScreenQuad {
+		bCastShadows : 1 = 0,
+	}
+}
+
+	;name = 'DeferredLighting'
+;	runtime_switches = [
+;		bCastShadows : 1 = 0	; 1-bit value, zero by default
+;	]
+	runtime_switches = [
+		{
+			define_name = 'bCastShadows'
+			size_in_bits = 1
+			default_value = 0
+		}
+	]
+	passes = [
+	]
+*/
+
+//#define bCastShadows	1
+
+#include "__shader_globals_common.h"
+#include "_VS.h"
+#include "_transform.h"
+#include "_screen_shader.h"
+#include "_gbuffer_read.h"
+#include "_lighting.h"
+
+cbuffer Data {
+	LocalLight u_spotLightData;
+};
+
+SamplerState s_point;
+
+Texture2D	t_projector<
+	string test = "!!!";
+>;
+
+float3 PS_DeferredSpotLight( in VS_ScreenOutput _inputs ) : SV_Target
+{
+#if bCastShadows
+	return (float3)0;
+#else
+	return (float3)1;
+#endif
+//	GSurfaceParameters surface = Sample_Surface_Data_From_GBuffer( s_point, _inputs.texCoord );
+//	return Phong_DiffuseLighting( surface.normal, u_data.L.xyz, u_data.diffuse.rgb )
+	//	* surface.albedo
+	//	;
+}
+
+
+
+
+#define bEnableSpecular 0
+#define bProjectsTexture 1
+#define bCastShadows	1
+#define bHardwarePCF	1	// shadows
+
+#include "__shader_globals_common.h"
+#include "_VS.h"
+#include "_PS.h"
+#include "_transform.h"
+#include "_screen_shader.h"
+#include "_gbuffer_read.h"
+#include "_lighting.h"
+
+
+//Texture2D		t_projector;
+SamplerState	s_linear<
+	string value = "BilinearSampler";
+>;
+
+Texture2D	t_projector<
+	string test = "!!!";
+>;
+
+
+cbuffer Data {
+	LocalLight u_spotLightData;
+};
+
+SamplerState s_point;
+
+Texture2D		shadowDepthMap;
+SamplerState	shadowMapSampler;
+SamplerComparisonState	shadowMapPCFBilinearSampler;
+
+
+
+float3 CalcSpotLight(
+	in LocalLight _light,	// light parameters
+	in GSurfaceParameters surface,	// surface parameters
+	in float3 positionVS	// surface position in view space
+)
+{
+	float3 outputColor = 0.0f;
+
+#if bProjectsTexture || bCastShadows
+	// Transform from view space to light projection space to texture space
+	// (the transform is combined with a texture scale-offset/bias matrix to avoid ClipPosToTexCoords()).
+	//const float2 projTexCoords = ClipPosToTexCoords( lightSpacePosH.xy );
+	const float4 lightSpacePosH = ProjectPoint3( _light.eyeToLightProjection, positionVS );
+	// texture coordinates for sampling shadow map/projective texture
+	const float2 projTexCoords = lightSpacePosH.xy;
+	const float3 projTexColor = t_projector.Sample( s_linear, projTexCoords ).rgb;
+#endif // bProjectsTexture || bCastShadows
+
+
+
+
+#if bCastShadows
+	const float depth = lightSpacePosH.z;	// normalized depth from the point of view of the light
+
+#if bHardwarePCF
+	const float lightShadowDepthBias = _light.spotLightAngles.w;
+	const float comparisonValue = depth + lightShadowDepthBias;
+	const float shadowFactor = shadowDepthMap.SampleCmpLevelZero(
+		shadowMapPCFBilinearSampler, projTexCoords, comparisonValue
+	);
+#else
+	const float shadowDepth = shadowDepthMap.Sample( shadowMapSampler, projTexCoords ).x;
+	const float shadowFactor = ( depth <= shadowDepth + lightShadowDepthBias ) ? 1.0f : 0.0f;
+#endif
+
+	clip(shadowFactor - 0.03f);
+
+#endif // bCastShadows
+
+
+
+
+	const float3 normalVS  = surface.normal;
+
+	const float lightRange =  _light.radius_invRadius.x;
+	const float lightInvRange =  _light.radius_invRadius.y;
+
+	float3 lightVec = _light.origin.xyz - positionVS.xyz;
+	float distance = length(lightVec);
+	lightVec /= distance;
+
+	float NdotL = saturate(dot(normalVS,lightVec));
+
+	// compute point light attenuation
+	float attenuation = saturate( 1.0f - distance * lightInvRange ) * NdotL;
+
+	// spot light attenuation
+	{
+		float cosAngle = dot( _light.spotDirection.xyz, -lightVec );
+		float cosPhi = _light.spotLightAngles.y;	// cosine of half outer cone angle
+		float cosTheta = _light.spotLightAngles.x;	// cosine of half inner cone angle
+		float spotFalloff = smoothstep( cosPhi, cosTheta, cosAngle );	// angular falloff
+		attenuation *= spotFalloff;
+	}
+
+	// compute diffuse term
+	outputColor += (surface.albedo.rgb * _light.diffuseColor.rgb);
+
+
+
+
+#if 0
+
+#if bEnableSpecular
+	// compute specular term
+	float specularFactor = pow(saturate(dot(reflect(normalize(positionVS), normalVS), lightVec)), surface.specularPower);
+	float3 specularColor = surface.specularAmount * light.specularColor.rgb * specularFactor;
+	outputColor += specularColor;
+#endif // bEnableSpecular
+
+#endif
+
+
+
+#if bProjectsTexture || bCastShadows
+	const float lightProjectorIntensity = _light.spotLightAngles.z;
+	outputColor = projTexColor * lightProjectorIntensity
+				+ outputColor * (1.0f - lightProjectorIntensity);
+#endif // bProjectsTexture || bCastShadows
+
+
+
+#if bCastShadows
+	outputColor *= shadowFactor;
+#endif // bCastShadows
+
+
+	outputColor *= attenuation;
+
+	return outputColor;
+}
+
+
+
+
+
+
+
+
+
+float3 PS_DeferredSpotLight( in VS_ScreenOutput _inputs ) : SV_Target
+{
+	const float hardwareDepth = DepthTexture.SampleLevel( s_point, _inputs.texCoord, 0 );
+	const float2 screenPosition = TexCoordsToClipPos( _inputs.texCoord );
+	const float3 viewSpacePosition = RestoreViewSpacePosition( screenPosition, hardwareDepth );
+#if bCastShadows || bProjectsTexture
+	const GSurfaceParameters surface = Sample_Surface_Data_From_GBuffer( s_point, _inputs.texCoord );
+	return CalcSpotLight( u_spotLightData, surface, viewSpacePosition )*0.91
+		//+ hardwareDepth*0.0001
+		//+ viewSpacePosition * 0.001f
+		;
+		//+ viewSpacePosition*0.0001 + viewSpacePosition.y < 100 ? float3(1,0,0) : float3(0,1,0);
+	//return (float3)0;
+#else
+	return (float3)1;
+#endif
+//	GSurfaceParameters surface = Sample_Surface_Data_From_GBuffer( s_point, _inputs.texCoord );
+//	return Phong_DiffuseLighting( surface.normal, u_data.L.xyz, u_data.diffuse.rgb )
+	//	* surface.albedo
+	//	;
+}
+
+
+entry = {
+	file = 'deferred_spot_light.hlsl'
+	vertex = 'FullScreenTriangle_VS'
+	pixel = 'PS_DeferredSpotLight'
+}
+scene_passes = [
+	{
+		name = 'DeferredLighting'
+	}
+]
+bind_samplers = [
+	{
+		name = 's_point'
+		value = 'PointSampler'
+	}
+	{
+		name = 's_linear'
+		value = 'BilinearSampler'
+	}
+
+	{
+		name = 'shadowMapSampler'
+		value = 'ShadowMapSampler'
+	}
+	{
+		name = 'shadowMapPCFBilinearSampler'
+		value = 'ShadowMapSamplerPCF'
+	}
+]
+
+|
+defines = [
+	; valid values: 1, 2, 4, 8
+	{
+		name = 'MSAA_SAMPLES'
+		defaultValue = '1'
+	}
+	{
+		name = 'USE_DEPTH_BOUNDS_TESTING'
+		defaultValue = '1'
+	}
+]
+|

@@ -1,0 +1,21 @@
+rasterizer = 	{
+	name = 'Default'
+	fill_mode = 'Solid'
+	cull_mode = 'Back'
+	flags = (
+		'Enable_DepthClip'
+	)
+}
+
+depth_stencil = 	{
+	name = 'Default'
+	flags = (
+		'Enable_DepthTest'
+		'Enable_DepthWrite'
+	)
+	comparison_function = 'Greater'	; reverse depth
+}
+
+blend = {
+	; no blending
+}

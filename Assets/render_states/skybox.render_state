@@ -1,0 +1,30 @@
+; render state: no face culling, no depth testing, no blending
+rasterizer = 	{
+	name = 'Solid_NoCull_DepthClip'
+	fill_mode	= 'Solid'
+	cull_mode 	= 'None'
+	flags = (
+		'Enable_DepthClip'
+	)
+}
+
+depth_stencil = 	{
+	name = 'ZGreaterEqual_NoZWrite_NoStencil'
+	flags = (
+		'Enable_DepthTest'
+	)
+
+
+	; Make sure the depth function is LESS_EQUAL and not just LESS.  
+	; Otherwise, the normalized depth values at z = 1 (NDC) will 
+	; fail the depth test if the depth buffer was cleared to 1.
+	;comparison_function = 'Less_Equal'
+
+	; Reverse Z:
+	comparison_function = 'Greater_Equal'
+}
+
+blend = {
+	; no blending
+	name = 'Default'
+}

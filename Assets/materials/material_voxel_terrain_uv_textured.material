@@ -1,0 +1,9 @@
+shader = 'voxel_terrain_uv_textured'
+|
+resources = [
+	{
+		name = 't_diffuseMap'
+		asset = 'uv-test'
+	}
+]
+|

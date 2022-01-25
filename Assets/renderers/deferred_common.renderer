@@ -1,0 +1,109 @@
+; this is only a template, all resource settings can be modified at startup
+depth_targets = [
+	; main depth-stencil buffer
+	{
+		name = 'MainDepthStencil'
+		;depends_on = 'BackBuffer'
+		;ScaleX	=	1.0
+		;ScaleY	=	1.0
+		sizeX = { size = 1 relative = 1 }
+		sizeY = { size = 1 relative = 1 }
+	
+		; switched to 32-bit floating point depth buffer with 'Reverse-Z' - for planetary rendering
+		;format	=	'D24S8'
+		format	=	'D32'
+
+		sample = 1	;<= we use the HW depth buffer to reconstruct position - create a shader resource view
+	}
+]
+
+color_targets =
+[
+	; deferred lighting accumulation buffer (HDR scene color);
+	; this texture is filled by Compute Shader
+	{
+		name = 'LightingTarget'
+		;depends_on = 'BackBuffer'
+		sizeX = { size = 1 relative = 1 }
+		sizeY = { size = 1 relative = 1 }
+		
+		;format	=	'RG11B10F'	;<= cheaper than R16G16B16A16
+		format	=	'RGBA16F'	; need an alpha channel for alpha blending (e.g. glass, smoke particles)
+		
+		; needs to be UAV for Tiled lighting
+		randomWrites = 1	; Compute shader can write to it
+		flags = ( 'RANDOM_WRITES' )
+	}
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; HDR
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; gray-scale luminance values from previous frames
+	; these settings can be modified at startup
+	{
+		name = 'AdaptedLuminance0'
+		sizeX = { size = 256 relative = 0 }
+		sizeY = { size = 256 relative = 0 }
+		format	=	'R32F'
+		numMips = 8	; will be set by app code
+		flags = ( 'GENERATE_MIPS' )
+	}
+	{
+		name = 'AdaptedLuminance1'
+		sizeX = { size = 256 relative = 0 }
+		sizeY = { size = 256 relative = 0 }
+		numMips = 8	; will be set by app code
+		format	=	'R32F'
+		flags = ( 'GENERATE_MIPS' )
+	}
+	
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; Bloom
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; Fast Approximate Anti-Aliasing (FXAA)
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
+	; If FXAA is enabled, we tonemap HDR Lighting Target and write result into this texture
+	{
+		name = 'FXAA_Input'
+		;depends_on = 'BackBuffer'
+		sizeX = { size = 1 relative = 1 }
+		sizeY = { size = 1 relative = 1 }
+		format	=	'RGBA8'
+	}
+	
+	
+|
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	; Blended Order-Independent Transparency (OIT)
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
+	; Blend Func: GL_ONE, GL_ONE. (Use to premultiplied alpha and weight.)
+	; RGB stores Sum[FragColor.rgb * FragColor.a * Weight(FragDepth)]
+	; Alpha stores Sum[FragColor.a * Weight(FragDepth)]
+	{
+		name = 'BlendedOIT_Accumulation'
+		sizeX = { size = 1 relative = 1 }
+		sizeY = { size = 1 relative = 1 }
+	
+		format = 'RGBA16F'
+		;format	=	'RG11B10F'	;<= cheaper than R16G16B16A16
+	}
+	; Blend Func: GL_ZERO, GL_ONE_MINUS_SRC_COLOR
+	; R stores Product[1.0 - FragColor.a]
+	{
+		name = 'BlendedOIT_Revealage'
+		sizeX = { size = 1 relative = 1 }
+		sizeY = { size = 1 relative = 1 }
+		
+		;format = 'R16F'	; TODO: compare with R8
+		format = 'R8_UNORM'	;<= cheaper than R16F
+	}
+|
+	
+]

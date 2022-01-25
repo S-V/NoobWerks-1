@@ -1,0 +1,2 @@
+Visual Debugger - a tool for recording and debugging 3D algorithms.
+It was created for debugging voxel mesher.

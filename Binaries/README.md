@@ -1,0 +1,1 @@
+MinHook DLLs are used by IG MemTrace.

@@ -1,0 +1,21 @@
+; Voxelization pass for Global Illumination via Voxel Cone Tracing
+; Render state: no face culling, no depth testing, no blending
+rasterizer = {
+	name = 'Voxelize'
+	fill_mode	= 'Solid'
+	cull_mode 	= 'None'
+	flags = (
+		'Enable_DepthClip'
+	)
+	;TODO: conservative rasterization
+}
+
+depth_stencil = {
+	name = 'Voxelize'
+	flags = ()
+}
+
+blend = {
+	name = 'Voxelize'
+	; no blending
+}
